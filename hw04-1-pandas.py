@@ -25,9 +25,31 @@ if __name__ == "__main__":
   memory_pre = compute_memory_usage('outputs/hw04-1-pandas-pre.txt')
   print(f'{memory_pre:.2f} MB used pre-computation')
   s3_uri = 's3://dsan6000-data/acled_events.parquet'
-  # Your code here: load the .parquet file from the given S3 URI, generate the
-  # plot as described in the main notebook, then use plt.savefig() to export it
-  # as yearly_fatalities_pandas.svg
+  
+  acled_df = pd.read_parquet(s3_uri)
+
+  acled_df = acled_df[acled_df['year'].between(2018, 2024)]
+
+  yearly_df = (
+      acled_df.groupby('year', as_index=False)['fatalities']
+      .sum()
+      .sort_values('year')
+  )
+
+  os.makedirs('images', exist_ok=True)
+
+  plt.figure(figsize=(10, 6))
+  sns.lineplot(
+      data=yearly_df,
+      x='year',
+      y='fatalities',
+      marker='o'
+  )
+  plt.title("ACLED: Yearly Fatality Counts (Pandas)")
+  plt.xlabel("Year")
+  plt.ylabel("Total Fatalities")
+  plt.tight_layout()
+  plt.savefig('images/yearly_fatalities_pandas.svg')
   
   memory_post = compute_memory_usage('outputs/hw04-1-pandas-post.txt')
   print(f'{memory_post:.2f} MB used post-computation')
